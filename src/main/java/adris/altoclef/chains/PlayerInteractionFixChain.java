@@ -2,6 +2,7 @@ package adris.altoclef.chains;
 
 import adris.altoclef.AltoClef;
 import adris.altoclef.Debug;
+import adris.altoclef.tasks.speedrun.YutaBeatMinecraftTask;
 import adris.altoclef.tasksystem.TaskChain;
 import adris.altoclef.tasksystem.TaskRunner;
 import adris.altoclef.util.helpers.ItemHelper;
@@ -99,6 +100,7 @@ public class PlayerInteractionFixChain extends TaskChain {
                 Debug.logMessage("Refreshed inventory...");
                 mod.getSlotHandler().refreshInventory();
                 _generalDuctTapeSwapTimeout.reset();
+                YutaBeatMinecraftTask.resetStoreTask = true;
                 return Float.NEGATIVE_INFINITY;
             }
         }

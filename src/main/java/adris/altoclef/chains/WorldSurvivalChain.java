@@ -1,6 +1,7 @@
 package adris.altoclef.chains;
 
 import adris.altoclef.AltoClef;
+import adris.altoclef.TaskCatalogue;
 import adris.altoclef.tasks.DoToClosestBlockTask;
 import adris.altoclef.tasks.InteractWithBlockTask;
 import adris.altoclef.tasks.construction.PutOutFireTask;
@@ -18,7 +19,11 @@ import baritone.api.utils.input.Input;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.effect.StatusEffect;
+import net.minecraft.entity.effect.StatusEffectCategory;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -48,6 +53,19 @@ public class WorldSurvivalChain extends SingleTaskChain {
 
         // Drowning
         handleDrowning(mod);
+
+        // Poison, or Bad Effect
+//        if (PlayerEntity.containsOnlyAmbientEffects(StatusEffectCategory.HARMFUL))
+//        {
+//            if (mod.getItemStorage().hasItem(Items.MILK_BUCKET))
+//            {
+//                mod.getSlotHandler().forceEquipItem(new Item[]{Items.MILK_BUCKET}, true); //"true" because it's food
+//                mod.getInputControls().hold(Input.CLICK_RIGHT);
+//                mod.getExtraBaritoneSettings().setInteractionPaused(true);
+//            } else {
+//                setTask(TaskCatalogue.getItemTask(Items.MILK_BUCKET));
+//            }
+//        }
 
         // Lava Escape
         if (isInLavaOhShit(mod) && mod.getBehaviour().shouldEscapeLava()) {

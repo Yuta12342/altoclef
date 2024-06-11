@@ -146,7 +146,7 @@ public class MarvionBeatMinecraftTask extends Task {
     private final TimerGame _timer2 = new TimerGame(35);
     private final TimerGame _timer3 = new TimerGame(60);
     boolean _weHaveEyes;
-    private static boolean dragonIsDead;
+    static boolean dragonIsDead;
     private BlockPos _endPortalCenterLocation;
     private boolean _isEquippingDiamondArmor;
     private boolean _ranStrongholdLocator;
