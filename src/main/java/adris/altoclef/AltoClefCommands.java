@@ -38,7 +38,8 @@ public class AltoClefCommands {
                 new CoverWithSandCommand(),
                 new CoverWithBlocksCommand(),
                 new SelfCareCommand(),
-                new YutaCommand()
+                new YutaCommand(),
+                new ManhuntCommand()
                 //new TestMoveInventoryCommand(),
                 //    new TestSwapInventoryCommand()
         );

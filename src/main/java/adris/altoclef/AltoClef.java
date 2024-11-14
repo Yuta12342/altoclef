@@ -11,6 +11,7 @@ import adris.altoclef.eventbus.events.ClientRenderEvent;
 import adris.altoclef.eventbus.events.ClientTickEvent;
 import adris.altoclef.eventbus.events.SendChatEvent;
 import adris.altoclef.eventbus.events.TitleScreenEntryEvent;
+import adris.altoclef.tasks.manhunt.ServerTickListener;
 import adris.altoclef.tasksystem.Task;
 import adris.altoclef.tasksystem.TaskRunner;
 import adris.altoclef.trackers.*;
@@ -25,6 +26,8 @@ import baritone.altoclef.AltoClefSettings;
 import baritone.api.BaritoneAPI;
 import baritone.api.Settings;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -96,6 +99,7 @@ public class AltoClef implements ModInitializer {
         // However, some things (like resources) may still be uninitialized.
         // As such, nothing will be loaded here but basic initialization.
         EventBus.subscribe(TitleScreenEntryEvent.class, evt -> onInitializeLoad());
+        ServerTickEvents.END_SERVER_TICK.register(new ServerTickListener());
     }
 
     public void onInitializeLoad() {
@@ -227,7 +231,7 @@ public class AltoClef implements ModInitializer {
         getClientBaritoneSettings().allowParkourAscend.value = true;
         getClientBaritoneSettings().allowParkourPlace.value = true;
         getClientBaritoneSettings().allowDiagonalDescend.value = true;
-        getClientBaritoneSettings().allowDiagonalAscend.value = true;
+        getClientBaritoneSettings().allowDiagonalAscend.value = false;
         getClientBaritoneSettings().blocksToAvoid.value = List.of(Blocks.FLOWERING_AZALEA, Blocks.AZALEA,
                 Blocks.POWDER_SNOW, Blocks.BIG_DRIPLEAF, Blocks.BIG_DRIPLEAF_STEM, Blocks.CAVE_VINES,
                 Blocks.CAVE_VINES_PLANT, Blocks.TWISTING_VINES, Blocks.TWISTING_VINES_PLANT, Blocks.SWEET_BERRY_BUSH,
