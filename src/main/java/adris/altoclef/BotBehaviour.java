@@ -166,6 +166,16 @@ public class BotBehaviour {
         return current().protectedItems.contains(item);
     }
 
+        //Way of disabling MLG and defense from a task
+        public boolean isDefenseDisabled() {
+            return current().disableDefence;
+        }
+    
+        public void disableDefence(boolean value) {
+            current().disableDefence = value;
+            current().applyState();
+        }
+
     public boolean shouldForceFieldPlayers() {
         return current().forceFieldPlayers;
     }
@@ -270,6 +280,7 @@ public class BotBehaviour {
 
         // Alto Clef params
         public boolean exclusivelyMineLogs;
+        public boolean disableDefence;
         public boolean forceFieldPlayers;
         public List<Predicate<Entity>> avoidDodgingProjectile = new ArrayList<>();
         public List<Predicate<Entity>> excludeFromForceField = new ArrayList<>();

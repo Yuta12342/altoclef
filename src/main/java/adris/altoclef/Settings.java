@@ -427,6 +427,8 @@ public class Settings implements IFailableConfigFile {
      */
     private List<BlockRange> areasToProtect = Collections.emptyList();
 
+    private int allowedItemGetRecursionDepth = 3;
+
 
     //////////////////////////////////////////////////////////////////////////////////////////
     ////////** END SETTINGS w/ COMMENTS **////////////////////////////////////////////////////
@@ -434,6 +436,10 @@ public class Settings implements IFailableConfigFile {
 
     public static void load(Consumer<Settings> onReload) {
         ConfigHelper.loadConfig(SETTINGS_PATH, Settings::new, Settings.class, onReload);
+    }
+
+    public int getAllowedItemGetRecursionDepth() {
+        return allowedItemGetRecursionDepth;
     }
 
     public boolean shouldShowTaskChain() {

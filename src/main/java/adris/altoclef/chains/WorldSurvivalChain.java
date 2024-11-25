@@ -49,23 +49,25 @@ public class WorldSurvivalChain extends SingleTaskChain {
 
     @Override
     public float getPriority(AltoClef mod) {
-        if (!AltoClef.inGame()) return Float.NEGATIVE_INFINITY;
+        if (!AltoClef.inGame())
+            return Float.NEGATIVE_INFINITY;
 
         // Drowning
         handleDrowning(mod);
 
         // Poison, or Bad Effect
-//        if (PlayerEntity.containsOnlyAmbientEffects(StatusEffectCategory.HARMFUL))
-//        {
-//            if (mod.getItemStorage().hasItem(Items.MILK_BUCKET))
-//            {
-//                mod.getSlotHandler().forceEquipItem(new Item[]{Items.MILK_BUCKET}, true); //"true" because it's food
-//                mod.getInputControls().hold(Input.CLICK_RIGHT);
-//                mod.getExtraBaritoneSettings().setInteractionPaused(true);
-//            } else {
-//                setTask(TaskCatalogue.getItemTask(Items.MILK_BUCKET));
-//            }
-//        }
+        if (mod.getPlayer().getStatusEffects().stream()
+                .anyMatch(effect -> effect.getEffectType().getCategory() == StatusEffectCategory.HARMFUL)) {
+            if (mod.getItemStorage().hasItem(Items.MILK_BUCKET)) {
+                mod.getSlotHandler().forceEquipItem(new Item[] { Items.MILK_BUCKET }, true); // "true" because it's food
+                mod.getInputControls().hold(Input.CLICK_RIGHT);
+                mod.getExtraBaritoneSettings().setInteractionPaused(true);
+            } else {
+                if (mod.getItemStorage().hasItem(Items.BUCKET)) {
+                    setTask(TaskCatalogue.getItemTask(Items.MILK_BUCKET, 1));
+                }
+            }
+        }
 
         // Lava Escape
         if (isInLavaOhShit(mod) && mod.getBehaviour().shouldEscapeLava()) {
@@ -81,7 +83,9 @@ public class WorldSurvivalChain extends SingleTaskChain {
 
         // Extinguish with water
         if (mod.getModSettings().shouldExtinguishSelfWithWater()) {
-            if (!(_mainTask instanceof EscapeFromLavaTask && isCurrentlyRunning(mod)) && mod.getPlayer().isOnFire() && !mod.getPlayer().hasStatusEffect(StatusEffects.FIRE_RESISTANCE) && !mod.getWorld().getDimension().ultrawarm()) {
+            if (!(_mainTask instanceof EscapeFromLavaTask && isCurrentlyRunning(mod)) && mod.getPlayer().isOnFire()
+                    && !mod.getPlayer().hasStatusEffect(StatusEffects.FIRE_RESISTANCE)
+                    && !mod.getWorld().getDimension().ultrawarm()) {
                 // Extinguish ourselves
                 if (mod.getItemStorage().hasItem(Items.WATER_BUCKET)) {
                     BlockPos targetWaterPos = mod.getPlayer().getBlockPos();
@@ -102,9 +106,11 @@ public class WorldSurvivalChain extends SingleTaskChain {
                 }
                 setTask(new DoToClosestBlockTask(GetToBlockTask::new, Blocks.WATER));
                 return 90;
-            } else if (mod.getItemStorage().hasItem(Items.BUCKET) && _extinguishWaterPosition != null && mod.getBlockTracker().blockIsValid(_extinguishWaterPosition, Blocks.WATER)) {
+            } else if (mod.getItemStorage().hasItem(Items.BUCKET) && _extinguishWaterPosition != null
+                    && mod.getBlockTracker().blockIsValid(_extinguishWaterPosition, Blocks.WATER)) {
                 // Pick up the water
-                setTask(new InteractWithBlockTask(new ItemTarget(Items.BUCKET, 1), Direction.UP, _extinguishWaterPosition.down(), true));
+                setTask(new InteractWithBlockTask(new ItemTarget(Items.BUCKET, 1), Direction.UP,
+                        _extinguishWaterPosition.down(), true));
                 return 60;
             } else {
                 _extinguishWaterPosition = null;
@@ -116,7 +122,8 @@ public class WorldSurvivalChain extends SingleTaskChain {
             // We can't break or place while inside a portal (not really)
             mod.getExtraBaritoneSettings().setInteractionPaused(true);
         } else {
-            // We're no longer stuck, but we might want to move AWAY from our stuck position.
+            // We're no longer stuck, but we might want to move AWAY from our stuck
+            // position.
             _portalStuckTimer.reset();
             mod.getExtraBaritoneSettings().setInteractionPaused(false);
         }
@@ -138,7 +145,8 @@ public class WorldSurvivalChain extends SingleTaskChain {
                 if (mod.getPlayer().isTouchingWater() && mod.getPlayer().getAir() < mod.getPlayer().getMaxAir()) {
                     // Swim up!
                     mod.getInputControls().hold(Input.JUMP);
-                    //mod.getClientBaritone().getInputOverrideHandler().setInputForceState(Input.JUMP, true);
+                    // mod.getClientBaritone().getInputOverrideHandler().setInputForceState(Input.JUMP,
+                    // true);
                     avoidedDrowning = true;
                     _wasAvoidingDrowning = true;
                 }
@@ -148,7 +156,8 @@ public class WorldSurvivalChain extends SingleTaskChain {
         if (_wasAvoidingDrowning && !avoidedDrowning) {
             _wasAvoidingDrowning = false;
             mod.getInputControls().release(Input.JUMP);
-            //mod.getClientBaritone().getInputOverrideHandler().setInputForceState(Input.JUMP, false);
+            // mod.getClientBaritone().getInputOverrideHandler().setInputForceState(Input.JUMP,
+            // false);
         }
     }
 
@@ -173,7 +182,8 @@ public class WorldSurvivalChain extends SingleTaskChain {
     }
 
     private boolean isStuckInNetherPortal(AltoClef mod) {
-        return WorldHelper.isInNetherPortal(mod) && !mod.getUserTaskChain().getCurrentTask().thisOrChildSatisfies(task -> task instanceof EnterNetherPortalTask);
+        return WorldHelper.isInNetherPortal(mod) && !mod.getUserTaskChain().getCurrentTask()
+                .thisOrChildSatisfies(task -> task instanceof EnterNetherPortalTask);
     }
 
     @Override

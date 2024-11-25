@@ -631,6 +631,7 @@ public class TaskCatalogue {
                 String b = "beetroot";
                 shapedRecipe3x3("beetroot_soup", Items.BEETROOT_SOUP, 1, b, b, b, b, b, b, o, "bowl", o);
             }
+            simple("dragon_egg", Items.DRAGON_EGG, CollectDragonEgg::new)._mineIfPresent = false;
         }
     }
 

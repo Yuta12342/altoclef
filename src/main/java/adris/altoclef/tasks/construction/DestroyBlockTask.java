@@ -1,10 +1,15 @@
 package adris.altoclef.tasks.construction;
 
 import adris.altoclef.AltoClef;
+import adris.altoclef.Debug;
+import adris.altoclef.TaskCatalogue;
+import adris.altoclef.tasks.movement.CustomBaritoneGoalTask;
 import adris.altoclef.tasks.movement.RunAwayFromPositionTask;
 import adris.altoclef.tasks.movement.SafeRandomShimmyTask;
+import adris.altoclef.tasks.resources.LimitedGetItemTask;
 import adris.altoclef.tasksystem.ITaskRequiresGrounded;
 import adris.altoclef.tasksystem.Task;
+import adris.altoclef.util.MiningRequirement;
 import adris.altoclef.util.helpers.ItemHelper;
 import adris.altoclef.util.helpers.LookHelper;
 import adris.altoclef.util.helpers.StorageHelper;
@@ -15,9 +20,12 @@ import baritone.api.pathing.goals.GoalBlock;
 import baritone.api.pathing.goals.GoalNear;
 import baritone.api.utils.Rotation;
 import baritone.api.utils.input.Input;
+import baritone.pathing.path.PathExecutor;
+import net.fabricmc.fabric.api.entity.event.v1.EntityElytraEvents.Custom;
 import net.minecraft.block.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.PillagerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.math.BlockPos;
@@ -50,6 +58,16 @@ public class DestroyBlockTask extends Task implements ITaskRequiresGrounded {
     };
     private Task _unstuckTask = null;
     private boolean isMining;
+
+    private Item _requiredTool;
+    private Task _toolTask;
+
+    
+
+    private boolean hasToolOrBetter(AltoClef mod, Item tool, MiningRequirement requirement) {
+        // Implement the logic to check if the player has the required tool or better
+        return CustomBaritoneGoalTask.hasToolOrBetter(mod, tool, requirement);
+    }
 
     public DestroyBlockTask(BlockPos pos) {
         _pos = pos;
@@ -284,6 +302,39 @@ public class DestroyBlockTask extends Task implements ITaskRequiresGrounded {
             if (WorldHelper.dangerousToBreakIfRightAbove(mod, _pos)) {
                 setDebugState("It's dangerous to break as we're right above it, moving away and trying again.");
                 return new RunAwayFromPositionTask(3, _pos.getY(), _pos);
+            }
+        }
+
+                // Check if we need a tool
+        if (mod.getItemStorage().hasItem(_requiredTool)) {
+            _toolTask = null;
+        }
+
+        if (_toolTask != null) {
+            if (!_toolTask.isFinished(mod)) {
+            setDebugState("Getting tool.");
+            return _toolTask;
+            }
+        }
+
+        // Check Baritone's path for blocks that require specific tools
+        PathExecutor pathExecutor = mod.getClientBaritone().getPathingBehavior().getCurrent();
+        if (pathExecutor != null) {
+            for (BlockPos pos : pathExecutor.getPath().positions()) {
+                Block block = mod.getWorld().getBlockState(pos).getBlock();
+                MiningRequirement requirement = MiningRequirement.getMinimumRequirementForBlock(block);
+                if (requirement != MiningRequirement.HAND) {
+                    Item requiredTool = requirement.getMinimumPickaxe();
+                    if (!hasToolOrBetter(mod, requiredTool, requirement)) {
+                        setDebugState("Getting required tool: " + requiredTool.getName().getString());
+                        Debug.logMessage("Getting tool for block: " + block);
+                        _toolTask = new LimitedGetItemTask(requiredTool, 1);
+                        _requiredTool = requiredTool;
+                        return TaskCatalogue.getItemTask(requiredTool, 1);
+                    } else {
+                        _toolTask = null;
+                    }
+                }
             }
         }
 

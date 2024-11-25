@@ -34,7 +34,7 @@ public class EntityHelper {
         if (hostile instanceof MobEntity entity) {
             if (entity instanceof HostileEntity entity1) {
                 return entity1.isAttacking() || !(entity1 instanceof EndermanEntity || entity1 instanceof PiglinEntity ||
-                        entity1 instanceof SpiderEntity || entity1 instanceof ZombifiedPiglinEntity);
+                        entity1 instanceof SpiderEntity || entity1 instanceof ZombifiedPiglinEntity) || entity instanceof PhantomEntity;
             }
             if (entity instanceof SlimeEntity entity1) {
                 return entity1.canSee(mod.getPlayer());

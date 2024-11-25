@@ -3,6 +3,7 @@ package adris.altoclef.tasks.manhunt;
 import adris.altoclef.AltoClef;
 import adris.altoclef.Debug;
 import adris.altoclef.TaskCatalogue;
+import adris.altoclef.tasks.entity.AbstractKillEntityTask;
 import adris.altoclef.tasks.entity.KillPlayerTask;
 import adris.altoclef.tasks.misc.EquipArmorTask;
 import adris.altoclef.tasks.movement.DefaultGoToDimensionTask;
@@ -13,6 +14,7 @@ import adris.altoclef.util.helpers.ItemHelper;
 import adris.altoclef.util.helpers.PlayerUtils;
 import adris.altoclef.util.helpers.WorldHelper;
 import adris.altoclef.util.time.TimerGame;
+import dev.babbaj.pathfinder.xz.e;
 import dev.babbaj.pathfinder.xz.s;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.entity.effect.StatusEffectCategory;
@@ -24,6 +26,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
+import net.minecraft.world.chunk.WorldChunk;
 import net.minecraft.item.Items;
 import net.minecraft.item.Item;
 import adris.altoclef.util.Dimension;
@@ -53,6 +56,7 @@ public class ManhuntTask extends Task {
     private TimerGame preparationTimer;
     private Item[] buildingBlocks;
     private TimerGame goldenAppleCooldown;
+    private boolean weaponOut = false;
     public static ManhuntTask instance;
 
     private MinecraftServer server;
@@ -115,6 +119,7 @@ public class ManhuntTask extends Task {
             currentPhase = Phase.DEFEND;
         }
 
+
         switch (currentPhase) {
             case TRACK:
                 return trackPlayer(mod);
@@ -132,7 +137,9 @@ public class ManhuntTask extends Task {
         return null;
     }
 
+
     public static Dimension getPlayerDimension(PlayerEntity player) {
+        Debug.logInternal("Player dimension: " + player.getWorld().getDimension().toString());
         if (player.getWorld().getDimension().ultrawarm())
             return Dimension.NETHER;
         if (player.getWorld().getDimension().natural())
@@ -209,8 +216,8 @@ public class ManhuntTask extends Task {
             PlayerEntity self = server.getPlayerManager().getPlayer(mod.getPlayer().getUuid());
             allPlayers = server.getPlayerManager().getPlayerList();
             double closestDistance = Double.MAX_VALUE;
-
             for (ServerPlayerEntity player : allPlayers) {
+                if (player.networkHandler == null || player.isDisconnected() || !player.isAlive() || !player.isAttackable()) {continue;}
                 if (player != self) {
                     double distance = player.squaredDistanceTo(mod.getPlayer());
                     if (distance < closestDistance) {
@@ -252,7 +259,25 @@ public class ManhuntTask extends Task {
 
         // Logic to attack the player
         BlockPos targetPos = targetPlayer.getBlockPos();
+        Dimension targetDimension = getPlayerDimension(targetPlayer);
+        double distanceBeforeAttack = 5;
+
+        if (mod.getPlayer().squaredDistanceTo(targetPlayer) <= distanceBeforeAttack * distanceBeforeAttack && !weaponOut) {
+            Item bestWeapon = AbstractKillEntityTask.bestWeapon(mod);
+            if (bestWeapon != null) {
+                setDebugState("Equipping weapon..." + bestWeapon.toString());
+                weaponOut = AbstractKillEntityTask.equipWeapon(mod);
+            } else {
+                setDebugState("No weapon found to equip.");
+            }
+        }
+        
         // Check if health is low and switch to DEFEND phase
+
+        if (targetDimension != WorldHelper.getCurrentDimension()) {
+            setDebugState("Player is in a different dimension, going to the player...");
+            return new DefaultGoToDimensionTask(targetDimension);
+        }
 
         if (mod.getEntityTracker().isPlayerLoaded(targetPlayer.getName().getString())) {
             setDebugState("Killing player: " + targetPlayer.getName().getString() + " at " + targetPos);
@@ -260,11 +285,37 @@ public class ManhuntTask extends Task {
         } else {
             BlockPos chunkPos = new BlockPos(targetPos.getX(), targetPos.getY(), targetPos.getZ());
             if (mod.getPlayer().getChunkPos().equals(new ChunkPos(chunkPos))) {
-                setDebugState("Wandering in chunk: " + chunkPos); } else {setDebugState("Going to Chunk: " + chunkPos);}
-                return WanderChunkTask(chunkPos);
+                setDebugState("Wandering in chunk: " + chunkPos);
+            } else {
+                setDebugState("Finding Player at " + targetPos);
+            }
+            // loadChunks(mod, chunkPos);
+            return new adris.altoclef.tasks.movement.GetToEntityTask(targetPlayer);
+
+        }
+    }
+
+    private void loadChunks(AltoClef mod, BlockPos chunkPos) {
+        // Logic to load chunks around the given position
+        ChunkPos chunk = new ChunkPos(chunkPos);
+        for (int x = -1; x <= 1; x++) {
+            for (int z = -1; z <= 1; z++) {
+                mod.getWorld().getChunk(chunk.x + x, chunk.z + z).setLoadedToWorld(true);
+                try {
+                    for (ServerWorld world : mod.getWorld().getServer().getWorlds()) {
+                        if (world != null) {
+                            WorldChunk chunkToLoad = world.getChunk(chunk.x + x, chunk.z + z);
+                            if (chunkToLoad != null) {
+                                chunkToLoad.loadEntities();
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    Debug.logError("Failed to load chunks: " + e.getMessage());
+                }
             }
         }
-                
+    }
 
     private Task defendSelf(AltoClef mod) {
         // Logic to defend itself, such as eating food or using a shield

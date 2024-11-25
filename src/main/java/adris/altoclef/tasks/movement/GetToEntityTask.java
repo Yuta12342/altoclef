@@ -1,14 +1,18 @@
 package adris.altoclef.tasks.movement;
 
 import adris.altoclef.AltoClef;
+import adris.altoclef.TaskCatalogue;
 import adris.altoclef.tasksystem.ITaskRequiresGrounded;
 import adris.altoclef.tasksystem.Task;
+import adris.altoclef.util.MiningRequirement;
 import adris.altoclef.util.baritone.GoalFollowEntity;
 import adris.altoclef.util.helpers.WorldHelper;
 import adris.altoclef.util.progresscheck.MovementProgressChecker;
 import baritone.api.utils.input.Input;
+import baritone.pathing.path.PathExecutor;
 import net.minecraft.block.*;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.Item;
 import net.minecraft.util.math.BlockPos;
 
 public class GetToEntityTask extends Task implements ITaskRequiresGrounded {
@@ -147,6 +151,22 @@ public class GetToEntityTask extends Task implements ITaskRequiresGrounded {
             return _wanderTask;
         }
 
+        // Check Baritone's path for blocks that require specific tools
+        PathExecutor pathExecutor = mod.getClientBaritone().getPathingBehavior().getCurrent();
+        if (pathExecutor != null) {
+            for (BlockPos pos : pathExecutor.getPath().positions()) {
+                Block block = mod.getWorld().getBlockState(pos).getBlock();
+                MiningRequirement requirement = MiningRequirement.getMinimumRequirementForBlock(block);
+                if (requirement != MiningRequirement.HAND) {
+                    Item requiredTool = requirement.getMinimumPickaxe();
+                    if (!hasToolOrBetter(mod, requiredTool, requirement)) {
+                        setDebugState("Getting required tool: " + requiredTool.getName().getString());
+                        return TaskCatalogue.getItemTask(requiredTool, 1);
+                    }
+                }
+            }
+        }
+
         if (!mod.getClientBaritone().getCustomGoalProcess().isActive()) {
             mod.getClientBaritone().getCustomGoalProcess().setGoalAndPath(new GoalFollowEntity(_entity, _closeEnoughDistance));
         }
@@ -161,6 +181,12 @@ public class GetToEntityTask extends Task implements ITaskRequiresGrounded {
 
         setDebugState("Going to entity");
         return null;
+    }
+
+    private boolean hasToolOrBetter(AltoClef mod, Item tool, MiningRequirement requirement) {
+        // Implement the logic to check if the player has the required tool or better
+        // This is a placeholder implementation
+        return CustomBaritoneGoalTask.hasToolOrBetter(mod, tool, requirement);
     }
 
     @Override

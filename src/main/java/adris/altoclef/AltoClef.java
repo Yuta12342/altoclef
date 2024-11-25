@@ -261,6 +261,7 @@ public class AltoClef implements ModInitializer {
         getClientBaritoneSettings().planAheadFailureTimeoutMS.reset();
         // Was 100
         getClientBaritoneSettings().movementTimeoutTicks.reset();
+        // getClientBaritoneSettings().maxCostIncrease.value = 1000.0;
     }
 
     // List all command sources here.
